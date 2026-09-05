@@ -68,10 +68,7 @@ async function listMapFiles(dir: string, extensions: string[]): Promise<string[]
 
 async function loadMap(dir: string, file: string): Promise<ParsedMap> {
   const fileBytes = await readFile(join(dir, file));
-  return parseMap(
-    fileBytes.buffer.slice(fileBytes.byteOffset, fileBytes.byteOffset + fileBytes.byteLength),
-    file,
-  );
+  return parseMap(new Uint8Array(fileBytes).buffer, file);
 }
 
 function verifyMap(file: string, map: ParsedMap): void {
