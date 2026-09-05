@@ -4,7 +4,7 @@
   "description": "Viewer for fheroes2 .fh2m map files",
   "author": "arthrp",
   "type": "module",
-  "license": "GPL-2.0",
+  "license": "GPL-3.0-only",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
