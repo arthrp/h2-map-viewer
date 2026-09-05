@@ -1,0 +1,20 @@
+{
+  "name": "h2m-viewer",
+  "version": "1.0.0",
+  "description": "Viewer for fheroes2 .fh2m map files",
+  "author": "arthrp",
+  "type": "module",
+  "license": "GPL-2.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "verify": "vite-node src/verify.ts"
+  },
+  "devDependencies": {
+    "@types/node": "24.3.0",
+    "typescript": "5.9.2",
+    "vite": "7.1.5",
+    "vite-node": "3.2.4"
+  }
+}

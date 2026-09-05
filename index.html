@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>h2m Viewer</title>
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>h2m Viewer</h1>
+        <div id="map-controls">
+          <label>
+            Map
+            <select id="map-select"></select>
+          </label>
+          <button id="upload-button" type="button">Upload map</button>
+          <input id="upload-input" type="file" accept=".fh2m,.mp2,.mx2" hidden />
+        </div>
+      </header>
+      <section id="meta"></section>
+      <div id="viewport">
+        <canvas id="map-canvas"></canvas>
+      </div>
+      <p id="hover">Hover a tile to inspect it.</p>
+      <ul id="legend"></ul>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
