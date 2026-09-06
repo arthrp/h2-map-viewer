@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { Ground } from "./parser/ground";
 import { parseMap } from "./parser/parseMap";
+import { playerColorMask } from "./parser/players";
 import type { GameVersion, ParsedMap } from "./parser/types";
 
 const srcDir = dirname(fileURLToPath(import.meta.url));
@@ -14,6 +15,7 @@ interface MapExpectation {
   width: number;
   tileCount: number;
   maxIndex: number;
+  ownedTowns: number;
   waterPct?: number;
   version?: number;
   gameVersion?: GameVersion;
@@ -26,6 +28,7 @@ const expected: Record<string, MapExpectation> = {
     tileCount: 20736,
     maxIndex: 431,
     waterPct: 44.6,
+    ownedTowns: 16,
   },
   Eruption: {
     version: 13,
@@ -33,12 +36,14 @@ const expected: Record<string, MapExpectation> = {
     tileCount: 11664,
     maxIndex: 414,
     waterPct: 0,
+    ownedTowns: 9,
   },
   "Lost Temple": {
     version: 13,
     width: 72,
     tileCount: 5184,
     maxIndex: 431,
+    ownedTowns: 4,
   },
   "Time vs Gravity": {
     width: 144,
@@ -46,6 +51,7 @@ const expected: Record<string, MapExpectation> = {
     maxIndex: 431,
     waterPct: 13.5,
     gameVersion: "priceOfLoyalty",
+    ownedTowns: 12,
   },
 };
 
@@ -101,6 +107,14 @@ function verifyMap(file: string, map: ParsedMap): void {
   }
   if (expect.waterPct !== undefined && percent(waterCount, map.tiles.length) !== expect.waterPct) {
     throw new Error(`${map.header.name}: water ${percent(waterCount, map.tiles.length)}%`);
+  }
+  if (map.towns.length !== expect.ownedTowns) {
+    throw new Error(`${map.header.name}: towns ${map.towns.length}`);
+  }
+  for (const town of map.towns) {
+    if ((map.header.availablePlayerColors & playerColorMask(town.colorIndex)) === 0) {
+      throw new Error(`${map.header.name}: town color ${town.colorIndex} is not available`);
+    }
   }
 
   const label =

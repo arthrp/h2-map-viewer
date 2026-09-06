@@ -1,4 +1,5 @@
-import type { ParsedMap } from "../parser/types";
+import type { ParsedMap, TownInfo } from "../parser/types";
+import { playerColor } from "./playerColors";
 import { TERRAIN_RGB } from "./terrainColors";
 
 const DEFAULT_TILE_SIZE = 6;
@@ -43,4 +44,28 @@ export function renderMap(
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+
+  for (const town of map.towns) {
+    drawTownMarker(ctx, town, tileSize);
+  }
+}
+
+function drawTownMarker(ctx: CanvasRenderingContext2D, town: TownInfo, tileSize: number): void {
+  const cx = town.x * tileSize + tileSize / 2;
+  const cy = town.y * tileSize + tileSize / 2;
+  ctx.fillStyle = playerColor(town.colorIndex);
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = Math.max(1, tileSize / 6);
+
+  if (town.isCastle) {
+    const size = tileSize * 1.8;
+    ctx.fillRect(cx - size / 2, cy - size / 2, size, size);
+    ctx.strokeRect(cx - size / 2, cy - size / 2, size, size);
+    return;
+  }
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, (tileSize * 1.4) / 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
 }

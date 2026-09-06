@@ -66,9 +66,23 @@ select {
 }
 
 #meta {
-  margin: 1rem 0;
+  margin: 1rem 0 0.5rem;
   color: var(--muted);
   white-space: pre-wrap;
+}
+
+#players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin: 0 0 1rem;
+  color: var(--muted);
+}
+
+#players .player {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 #viewport {

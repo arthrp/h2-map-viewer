@@ -1,12 +1,16 @@
 import { ByteReader } from "./byteReader";
 import { getGroundByImageIndex } from "./ground";
-import type { MapHeader, ParsedMap, TileInfo } from "./types";
+import { NEUTRAL_COLOR_INDEX, RANDOM_RACE_INDEX } from "./players";
+import type { MapHeader, ParsedMap, TileInfo, TownInfo } from "./types";
 
 export const MAGIC_SIGNATURE = new Uint8Array([0x68, 0x32, 0x6d, 0x61, 0x70, 0x00]); // "h2map\0"
 const MIN_FILE_SIZE = 512;
 const MIN_VERSION = 2;
 const MAX_VERSION = 13;
-const TILE_OBJECT_SIZE = 9;
+const LANDSCAPE_FLAGS = 9;
+const KINGDOM_TOWNS = 18;
+const MAX_NAMED_TOWN_INDEX = 11;
+const RANDOM_CASTLE_INDEX = 12;
 
 export async function parseNewFormatMap(buffer: ArrayBuffer): Promise<ParsedMap> {
   if (buffer.byteLength < MIN_FILE_SIZE) {
@@ -20,9 +24,9 @@ export async function parseNewFormatMap(buffer: ArrayBuffer): Promise<ParsedMap>
   const header = parseBaseHeader(reader);
   const payload = bytes.subarray(bytes.length - reader.remaining());
   const inflated = await inflateZlib(payload);
-  const tiles = parseTiles(new ByteReader(inflated), header.width);
+  const { tiles, towns } = parseTiles(new ByteReader(inflated), header.width);
 
-  return { header, tiles };
+  return { header, tiles, towns };
 }
 
 function expectMagic(reader: ByteReader): void {
@@ -90,7 +94,7 @@ function parseBaseHeader(reader: ByteReader): MapHeader {
   };
 }
 
-function parseTiles(reader: ByteReader, width: number): TileInfo[] {
+function parseTiles(reader: ByteReader, width: number): { tiles: TileInfo[]; towns: TownInfo[] } {
   skipVector(reader, () => reader.u32());
 
   const tileCount = reader.u32();
@@ -99,11 +103,23 @@ function parseTiles(reader: ByteReader, width: number): TileInfo[] {
   }
 
   const tiles: TileInfo[] = [];
+  const townObjects: { tileIndex: number; id: number; index: number }[] = [];
+  const flags = new Map<string, number>();
+
   for (let i = 0; i < tileCount; i++) {
     const terrainIndex = reader.u16();
     const terrainFlags = reader.u8();
     const objectCount = reader.u32();
-    reader.skip(objectCount * TILE_OBJECT_SIZE);
+    for (let j = 0; j < objectCount; j++) {
+      const id = reader.u32();
+      const group = reader.u8();
+      const index = reader.u32();
+      if (group === KINGDOM_TOWNS) {
+        townObjects.push({ tileIndex: i, id, index });
+      } else if (group === LANDSCAPE_FLAGS) {
+        flags.set(`${i}:${id}`, index);
+      }
+    }
     tiles.push({
       terrainIndex,
       terrainFlags,
@@ -111,7 +127,43 @@ function parseTiles(reader: ByteReader, width: number): TileInfo[] {
     });
   }
 
-  return tiles;
+  return { tiles, towns: resolveTowns(townObjects, flags, width) };
+}
+
+function resolveTowns(
+  townObjects: { tileIndex: number; id: number; index: number }[],
+  flags: Map<string, number>,
+  width: number,
+): TownInfo[] {
+  const towns: TownInfo[] = [];
+
+  for (const town of townObjects) {
+    const x = town.tileIndex % width;
+    const y = Math.floor(town.tileIndex / width);
+    const flagIndex =
+      (x > 0 ? flags.get(`${town.tileIndex - 1}:${town.id}`) : undefined) ??
+      (x < width - 1 ? flags.get(`${town.tileIndex + 1}:${town.id}`) : undefined);
+    if (flagIndex === undefined) {
+      continue;
+    }
+
+    const colorIndex = flagIndex >> 1;
+    if (colorIndex >= NEUTRAL_COLOR_INDEX) {
+      continue;
+    }
+
+    const { raceIndex, isCastle } = townShape(town.index);
+    towns.push({ x, y, colorIndex, raceIndex, isCastle });
+  }
+
+  return towns;
+}
+
+function townShape(index: number): { raceIndex: number; isCastle: boolean } {
+  if (index <= MAX_NAMED_TOWN_INDEX) {
+    return { raceIndex: index >> 1, isCastle: index % 2 === 0 };
+  }
+  return { raceIndex: RANDOM_RACE_INDEX, isCastle: index === RANDOM_CASTLE_INDEX };
 }
 
 function skipVector(reader: ByteReader, skipItem: () => void): void {

@@ -25,7 +25,16 @@ export interface TileInfo {
   ground: GroundId;
 }
 
+export interface TownInfo {
+  x: number;
+  y: number;
+  colorIndex: number;
+  raceIndex: number;
+  isCastle: boolean;
+}
+
 export interface ParsedMap {
   header: MapHeader;
   tiles: TileInfo[];
+  towns: TownInfo[];
 }
