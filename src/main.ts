@@ -48,7 +48,7 @@ function requiredElement<T extends HTMLElement>(
   return element;
 }
 
-function fillLegend(): void {
+function fillMapLegend(): void {
   legend.replaceChildren(
     ...LEGEND_GROUNDS.map((ground) => {
       const item = document.createElement("li");
@@ -155,7 +155,7 @@ async function uploadMap(file: File): Promise<void> {
   select.value = url;
 }
 
-function populateSelect(): void {
+function populateMapsSelect(): void {
   if (maps.length === 0) {
     throw new Error("No .fh2m maps found in maps/");
   }
@@ -168,7 +168,7 @@ function populateSelect(): void {
   }
 
   select.addEventListener("change", () => {
-    void loadMap(select.value, selectedFileName()).catch(showError);
+    void loadMap(select.value, getSelectedFilename()).catch(showError);
   });
 }
 
@@ -188,11 +188,11 @@ function bindUpload(): void {
   });
 }
 
-fillLegend();
-populateSelect();
-bindUpload();
-void loadMap(select.value, selectedFileName()).catch(showError);
-
-function selectedFileName(): string | undefined {
+function getSelectedFilename(): string | undefined {
   return select.selectedOptions[0]?.textContent ?? undefined;
 }
+
+fillMapLegend();
+populateMapsSelect();
+bindUpload();
+void loadMap(select.value, getSelectedFilename()).catch(showError);
